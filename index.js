@@ -7,7 +7,7 @@ const cors = require("cors");
 
 const mongoString = process.env.DATABASE_URL 
 mongoose.connect(mongoString);
-const routes= require('./routes/routes.js');
+const routes= require('./routes/user.js');
 const database = mongoose.connection
 database.on('error',(error)=>{
     console.log(error);

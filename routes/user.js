@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Model = require('../model/model.js');
+const userModel = require('../model/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -10,7 +10,7 @@ router.post('/register', (req, res) => {
         res.status(400).json({ message: 'Not all fields have been filled' });
         return;
     }
-    Model.findOne({ email: req.body.email }).then(user => {
+    userModel.findOne({ email: req.body.email }).then(user => {
         if (user) {
             res.status(422).json({ message: "Email is already taken" })
         }
@@ -19,7 +19,7 @@ router.post('/register', (req, res) => {
             bcrypt.genSalt(10, async (err, salt) => {
                 bcrypt.hash(req.body.password, salt, (err, hash) => {
                     pass = hash;
-                    const data = new Model({
+                    const data = new userModel({
                         name: req.body.name,
                         email: req.body.email,
                         password: pass,
@@ -58,7 +58,7 @@ router.post('/signin', (req, res) => {
     }
     async function signIn(email, password) {
       
-            const user = await Model.findOne({ email });
+            const user = await userModel.findOne({ email });
 
             if (!user) {
                 res.status(400).json({ message: "User doesn't exist" })
