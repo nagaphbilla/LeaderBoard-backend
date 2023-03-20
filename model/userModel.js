@@ -13,22 +13,18 @@ const UserSchema = new mongoose.Schema({
     type: String
   },
   codeforces:{
-    required: true,
     type: String,
     default:""
   },
   leetcode:{
-    required: true,
     type: String,
     default:""
   },
   codechef:{
-    required: true,
     type: String,
     default:""
   },
   github:{
-    required: true,
     type: String,
     default:""
   }
