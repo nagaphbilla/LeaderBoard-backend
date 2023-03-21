@@ -31,10 +31,8 @@ router.get('/github', (req, res) => {
     var urls = [];
     User.find()
     .then(users => {
-        console.log(users.length);
         users.map(async user => {
             let id = user["github"]
-            console.log(id);
             let details = {"name" : user["name"], "username" : user["github"]}
             if(id == "") {
                 id = "github"
@@ -48,7 +46,7 @@ router.get('/github', (req, res) => {
     .then(() => {
         Promise.all(urls.map(async url => {
             if(url["username"] != "") {
-                const data = await fetch("https://api.github.com/users/Vedavyas11062004")
+                const data = await fetch(`https://api.github.com/users/${url["username"]}`)
                 const res = await data.json()
                 url["repos"] = res["public_repos"]
             }
@@ -56,12 +54,9 @@ router.get('/github', (req, res) => {
             return data.text()
         }))
         .then(values => {
-            console.log("URLS - ", urls.length);
-            console.log("Values - ", values.length);
             var result = []
             var parser = new DomParser();
             for(var i=0;i<values.length;i++) {
-                console.log(urls[i]);
                 let details = {"name" : urls[i]["name"], "username" : urls[i]["username"], "repos" : urls[i]["repos"]}
                 if(values[i] == "Not Found") {
                     details["contributions"] = null
