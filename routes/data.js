@@ -31,25 +31,19 @@ router.get('/github', (req, res) => {
     var urls = [];
     User.find()
     .then(users => {
-        users.map(async user => {
+        users.map(user => {
             let id = user["github"]
             let details = {"name" : user["name"], "username" : user["github"]}
             if(id == "") {
                 id = "github"
             }
             const url = `https://github.com/users/${id}/contributions?to=2023-12-31`
-            details["repos"] = 0
             details["url"] = url
             urls.push(details)
         })
     })
     .then(() => {
         Promise.all(urls.map(async url => {
-            if(url["username"] != "") {
-                const data = await fetch(`https://api.github.com/users/${url["username"]}`)
-                const res = await data.json()
-                url["repos"] = res["public_repos"]
-            }
             const data = await fetch(url["url"])
             return data.text()
         }))
@@ -57,7 +51,7 @@ router.get('/github', (req, res) => {
             var result = []
             var parser = new DomParser();
             for(var i=0;i<values.length;i++) {
-                let details = {"name" : urls[i]["name"], "username" : urls[i]["username"], "repos" : urls[i]["repos"]}
+                let details = {"name" : urls[i]["name"], "username" : urls[i]["username"]}
                 if(values[i] == "Not Found") {
                     details["contributions"] = null
                 }
@@ -70,6 +64,42 @@ router.get('/github', (req, res) => {
             }
             res.status(200).json(result)
         })
+    })
+})
+
+router.get("/codeforces", (req, res) => {
+    var url = "https://codeforces.com/api/user.info?handles="
+    var response = []
+    User.find()
+    .then(users => {
+        users.map(user => {
+            let id = user["codeforces"]
+            url += id + ';'
+            const details = {"name" : user["name"]}
+            if(id == "") {
+                details["username"] = "-"
+                details["rating"] = null
+                details["tag"] = null
+            }
+            response.push(details)      
+        })
+    })
+    .then(() => {
+        fetch(url)
+        .then(data => data.json())
+        .then(result => {
+            const users = result["result"]
+            let j = 0;
+            for(let i=0;i<response.length;i++) {
+                if(response[i]["username"] != "-") {
+                    response[i]["username"] = users[j]["handle"]
+                    response[i]["rating"] = users[j]["rating"]
+                    response[i]["tag"] = users[j]["rank"]
+                    j += 1                  
+                }
+            }
+        })
+        .then(() => {res.status(200).json(response)})
     })
 })
 
