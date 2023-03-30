@@ -1,10 +1,11 @@
 const router = require('express').Router()
 const User = require("../model/userModel")
 const DomParser = require("dom-parser")
+const auth = require("../middleware/auth")
 const fetch = (...args) =>
 import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-router.get('/leetcode', (req, res) => {
+router.get('/leetcode', auth, (req, res) => {
     var urls = [];
     User.find()
     .then(users => {
@@ -27,7 +28,7 @@ router.get('/leetcode', (req, res) => {
         })
     })
 })
-router.get('/github', (req, res) => {
+router.get('/github', auth, (req, res) => {
     var urls = [];
     User.find()
     .then(users => {
@@ -67,7 +68,7 @@ router.get('/github', (req, res) => {
     })
 })
 
-router.get("/codeforces", (req, res) => {
+router.get("/codeforces", auth, (req, res) => {
     var url = "https://codeforces.com/api/user.info?handles="
     var response = []
     User.find()
@@ -101,6 +102,39 @@ router.get("/codeforces", (req, res) => {
         })
         .then(() => {res.status(200).json(response)})
     })
+})
+
+router.post("/checkProfiles", async (req, res) => {
+    var errors = {}
+    const leetcode = req.body.leetcode
+    const github = req.body.github
+    const codeforces = req.body.codeforces
+    const checkUsers = async () => {
+        if(leetcode) {
+            const url = `https://leetcode.com/graphql/?query={%20matchedUser(username:%20%22${leetcode}%22)%20{%20username%20badges%20{%20name%20}%20submitStats:%20submitStatsGlobal%20{%20acSubmissionNum%20{%20difficulty%20count%20}%20}%20}%20userContestRanking(username:%20%20%22${leetcode}%22)%20{%20rating%20}%20}`
+            const data = await fetch(url)
+            const user = await data.json()
+            if(user.data.matchedUser == null) {
+                errors["leetcode"] = false
+            }
+        }
+        if(github) {
+            const data = await fetch(`https://api.github.com/users/${github}`)
+            const user = await data.json()
+            if(user.message == "Not Found") {
+                errors["github"] = false
+            }
+        }
+        if(codeforces) {
+            const data = await fetch(`https://codeforces.com/api/user.info?handles=${codeforces}`)
+            const user = await data.json()
+            if(user.status == "FAILED") {
+                errors["codeforces"] = false
+            }
+        }
+    }
+    await checkUsers()
+    res.status(200).json(errors)    
 })
 
 module.exports = router
